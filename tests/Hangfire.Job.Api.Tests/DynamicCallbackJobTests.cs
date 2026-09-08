@@ -17,6 +17,6 @@ public class DynamicCallbackJobTests
         var job = new DynamicCallbackJob(new HttpClient(), validator);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            job.ExecuteAndNotifyAsync("job-1", "order-1", "http://metadata.example.com/", []));
+            job.ExecuteAndNotifyAsync("order-1", "http://metadata.example.com/", []));
     }
 }

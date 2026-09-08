@@ -18,8 +18,8 @@ public class JobsController(CallbackUrlValidator callbackUrlValidator) : Control
             return StatusCode(StatusCodes.Status400BadRequest, new { Message = validation.Error });
         }
 
-        RecurringJob.AddOrUpdate<DynamicCallbackJob>(request.JobName,
-            job => job.ExecuteAndNotifyAsync(request.JobName!, request.UniqueId, request.CallbackUrl,
+        RecurringJob.AddOrUpdate<DynamicCallbackJob>(request.UniqueId,
+            job => job.ExecuteAndNotifyAsync(request.UniqueId, request.CallbackUrl,
                 request.MetaData ?? new Dictionary<string, string>()), request.Cron);
 
         return StatusCode(StatusCodes.Status201Created, new { Message = "Job created successfully" });
