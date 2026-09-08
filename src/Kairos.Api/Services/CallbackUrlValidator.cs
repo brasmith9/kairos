@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace Hangfire.Job.Api.Services;
+namespace Kairos.Api.Services;
 
 public record CallbackUrlValidationResult(bool IsValid, string? Error)
 {

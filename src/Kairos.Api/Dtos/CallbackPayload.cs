@@ -1,4 +1,4 @@
-namespace Hangfire.Job.Api.Dtos;
+namespace Kairos.Api.Dtos;
 
 public class CallbackPayload
 {

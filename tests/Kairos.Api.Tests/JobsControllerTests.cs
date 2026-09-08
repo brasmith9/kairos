@@ -1,11 +1,11 @@
 using System.Net;
-using Hangfire.Job.Api.Controllers;
-using Hangfire.Job.Api.Dtos;
-using Hangfire.Job.Api.Services;
+using Kairos.Api.Controllers;
+using Kairos.Api.Dtos;
+using Kairos.Api.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hangfire.Job.Api.Tests;
+namespace Kairos.Api.Tests;
 
 public class JobsControllerTests
 {

@@ -1,16 +1,18 @@
+using Hangfire;
 using System.Net;
 using Hangfire.InMemory;
-using Hangfire.Job.Api.Controllers;
-using Hangfire.Job.Api.Dtos;
-using Hangfire.Job.Api.Services;
+using Kairos.Api.Controllers;
+using Kairos.Api.Dtos;
+using Kairos.Api.Services;
 using Hangfire.Storage;
 
-namespace Hangfire.Job.Api.Tests;
+namespace Kairos.Api.Tests;
 
 /// <summary>
 /// Exercises scheduling and cancellation against real (in-memory) Hangfire storage,
 /// so the recurring-job id the API writes and the one it deletes have to agree.
 /// </summary>
+[Collection(HangfireStorageCollection.Name)]
 public class RecurringJobLifecycleTests
 {
     private static JobsController Controller()
