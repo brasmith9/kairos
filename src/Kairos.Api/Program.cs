@@ -1,10 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Hangfire;
-using Hangfire.Job.Api.Security;
-using Hangfire.Job.Api.Services;
-using Hangfire.Job.Api.Services.Providers;
 using Hangfire.PostgreSql;
+using Kairos.Api.Security;
+using Kairos.Api.Services;
+using Kairos.Api.Services.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,8 +27,11 @@ var dashboardOptions = builder.Configuration.GetSection(DashboardAuthOptions.Sec
     .Get<DashboardAuthOptions>() ?? new DashboardAuthOptions();
 var callbackOptions = builder.Configuration.GetSection(CallbackOptions.SectionName)
     .Get<CallbackOptions>() ?? new CallbackOptions();
+var apiAuthOptions = builder.Configuration.GetSection(ApiAuthOptions.SectionName)
+    .Get<ApiAuthOptions>() ?? new ApiAuthOptions();
 
 builder.Services.AddHttpClient();
+builder.Services.AddSingleton(callbackOptions);
 builder.Services.AddSingleton(new CallbackUrlValidator(callbackOptions));
 builder.Services.AddTransient<DynamicCallbackJob>();
 
@@ -50,11 +53,26 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+var apiKeyAuthenticator = new ApiKeyAuthenticator(apiAuthOptions);
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/api"), branch =>
+    branch.Use(async (context, next) =>
+    {
+        if (!apiKeyAuthenticator.IsAuthorized(context))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsJsonAsync(new { Message = "Missing or invalid API key." });
+            return;
+        }
+
+        await next();
+    }));
+
 app.MapControllers();
 
 app.UseHangfireDashboard(dashboardOptions.Path, new DashboardOptions
 {
-    DashboardTitle = "Hangfire Job API",
+    DashboardTitle = "Kairos",
     Authorization = [new DashboardBasicAuthFilter(dashboardOptions)]
 });
 

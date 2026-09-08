@@ -1,7 +1,7 @@
 using System.Net;
-using Hangfire.Job.Api.Services;
+using Kairos.Api.Services;
 
-namespace Hangfire.Job.Api.Tests;
+namespace Kairos.Api.Tests;
 
 public class CallbackUrlValidatorTests
 {

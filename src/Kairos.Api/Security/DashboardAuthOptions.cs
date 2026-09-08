@@ -1,4 +1,4 @@
-namespace Hangfire.Job.Api.Security;
+namespace Kairos.Api.Security;
 
 /// <summary>
 /// Binds the <c>Hangfire:Dashboard</c> configuration section.
@@ -6,7 +6,7 @@ namespace Hangfire.Job.Api.Security;
 /// </summary>
 public class DashboardAuthOptions
 {
-    public const string SectionName = "Hangfire:Dashboard";
+    public const string SectionName = "Kairos:Dashboard";
 
     public string Path { get; set; } = "/dashboard";
     public string? Username { get; set; }

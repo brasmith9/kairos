@@ -1,166 +1,181 @@
-# Hangfire Job API
+# Kairos
 
-[![CI](https://github.com/brasmith9/Hangfire.Job.Api/actions/workflows/ci.yml/badge.svg)](https://github.com/brasmith9/Hangfire.Job.Api/actions/workflows/ci.yml)
+**Scheduled webhooks, self-hosted.** Cron in, HTTP callback out.
+
+[![CI](https://github.com/brasmith9/kairos/actions/workflows/ci.yml/badge.svg)](https://github.com/brasmith9/kairos/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A small ASP.NET Core service that turns [Hangfire](https://www.hangfire.io/) into a
-language-agnostic **webhook scheduler**.
-
-Instead of writing C# jobs, a client POSTs a cron expression and a callback URL. When the
-cron fires, this service POSTs back to that URL. Any service that can receive an HTTP
-request can now schedule work on Hangfire, whatever it's written in.
+Kairos turns [Hangfire](https://www.hangfire.io/) into a language-agnostic scheduler.
+Instead of writing C# jobs, a client POSTs a cron expression (or a timestamp) and a
+callback URL. When it fires, Kairos POSTs back — signed, so you can verify it.
 
 ```
-POST /api/jobs  ──►  Hangfire (PostgreSQL)  ──cron fires──►  POST https://your-app/webhook
+POST /api/jobs  ──►  Kairos (Hangfire + PostgreSQL)  ──fires──►  POST https://your-app/webhook
 ```
 
-## Features
+Any service that speaks HTTP can now schedule work, whatever it's written in.
 
-- Schedule and cancel recurring webhooks over a JSON API
-- Durable job storage in PostgreSQL, surviving restarts
-- Hangfire's automatic retries when your webhook returns a non-success status
-- Password-protected dashboard, closed to the internet by default
-- Callback URLs validated against SSRF (loopback, private and cloud-metadata ranges)
+## Why this exists
 
-## Requirements
+If you already run Hangfire, your .NET services have durable scheduling and your Node,
+Python and Go services have nothing. Kairos exposes the infrastructure you already
+operate as an HTTP API the whole organisation can call — no new datastore, no new thing
+to run.
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- PostgreSQL 12 or later
+If you don't run Hangfire, it's a self-hosted alternative to Cloud Scheduler and
+EventBridge Scheduler that keeps your callback URLs and job history on your own hardware.
+
+| | Kairos | Cloud Scheduler / EventBridge | QStash |
+| --- | --- | --- | --- |
+| Self-hosted | yes | no | no |
+| Storage | your PostgreSQL | vendor | vendor |
+| Signed callbacks | yes | no (IAM instead) | yes |
+| Retries | Hangfire's policy | yes | yes |
+| Built-in UI | Hangfire dashboard | console | console |
+| Cost | your server | per job | per message |
 
 ## Quick start
 
 ```bash
-git clone https://github.com/brasmith9/Hangfire.Job.Api.git
-cd Hangfire.Job.Api
-
-# Create the database Hangfire will install its schema into
-createdb Hangfire
-
-# Point the app at your database (see Configuration below)
-dotnet user-secrets --project src/Hangfire.Job.Api \
-  set "ConnectionStrings:DefaultConnection" \
-  "Server=127.0.0.1;Port=5432;User Id=postgres;Password=yourpassword;Database=Hangfire"
-
-dotnet run --project src/Hangfire.Job.Api
+git clone https://github.com/brasmith9/kairos.git
+cd kairos
+docker compose up
 ```
 
-The service starts on `http://localhost:5222`. Hangfire creates its own tables on first run.
+That's PostgreSQL plus Kairos on <http://localhost:8080>, with development credentials
+baked into `docker-compose.yml`. Schedule something:
 
-| URL | What |
-| --- | --- |
-| `http://localhost:5222/swagger` | Swagger UI (Development only) |
-| `http://localhost:5222/dashboard` | Hangfire dashboard |
+```bash
+curl -X POST http://localhost:8080/api/jobs \
+  -H 'Content-Type: application/json' \
+  -H 'X-Api-Key: dev-api-key' \
+  -d '{
+        "uniqueId": "order-42",
+        "cron": "*/5 * * * *",
+        "callbackUrl": "https://example.com/webhooks/kairos",
+        "metaData": { "orderId": "42" }
+      }'
+```
+
+The dashboard is at <http://localhost:8080/dashboard> (`admin` / `admin`).
+
+> The compose file sets an API key, dashboard credentials and
+> `AllowPrivateNetworks=true` because container traffic isn't loopback and callbacks to
+> sibling services resolve to private addresses. **They are development values.** See
+> [Configuration](#configuration) before deploying.
+
+### Running from source
+
+```bash
+dotnet run --project src/Kairos.Api      # needs PostgreSQL on 127.0.0.1:5432
+dotnet test
+```
 
 ## Configuration
 
 `appsettings.json` ships with placeholders. Real values belong in
 `appsettings.Development.json` (gitignored), [user secrets][secrets], or environment
-variables — never in a committed file.
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=127.0.0.1;Port=5432;User Id=postgres;Password=CHANGE_ME;Database=Hangfire"
-  },
-  "Hangfire": {
-    "Dashboard": {
-      "Path": "/dashboard",
-      "Username": "",
-      "Password": ""
-    },
-    "Callbacks": {
-      "AllowPrivateNetworks": false
-    }
-  }
-}
-```
+variables — never in a committed file. Every setting maps to an environment variable
+using `__` as the separator, e.g. `Kairos__Api__Keys__0`.
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
-| `Hangfire:Dashboard:Path` | `/dashboard` | Where the dashboard is mounted |
-| `Hangfire:Dashboard:Username` | *(empty)* | Empty means **local requests only**. Set it to enable Basic auth from anywhere |
-| `Hangfire:Dashboard:Password` | *(empty)* | Password for Basic auth |
-| `Hangfire:Callbacks:AllowPrivateNetworks` | `false` | `true` permits callbacks to localhost and private IPs. **Development only** |
+| `ConnectionStrings:DefaultConnection` | — | PostgreSQL connection string |
+| `Kairos:Api:Keys` | *(empty)* | Accepted API keys. Empty means **local requests only** |
+| `Kairos:Dashboard:Path` | `/dashboard` | Where the dashboard is mounted |
+| `Kairos:Dashboard:Username` | *(empty)* | Empty means **local requests only**. Set it to enable Basic auth |
+| `Kairos:Dashboard:Password` | *(empty)* | Password for dashboard Basic auth |
+| `Kairos:Callbacks:SigningSecret` | *(empty)* | HMAC secret. Empty means callbacks are unsigned |
+| `Kairos:Callbacks:AllowPrivateNetworks` | `false` | `true` permits callbacks to localhost and private IPs. **Development only** |
 
-Every setting can be supplied as an environment variable using `__` as the separator:
-
-```bash
-export Hangfire__Dashboard__Username=admin
-export Hangfire__Dashboard__Password=a-long-random-password
-```
+Both auth mechanisms fail closed the same way: configure nothing and only local callers
+get through, so an unconfigured deployment is never open to the internet.
 
 [secrets]: https://learn.microsoft.com/aspnet/core/security/app-secrets
 
 ## API
 
-### `POST /api/jobs` — schedule a recurring callback
+Every `/api` route requires `X-Api-Key` unless the caller is local and no keys are set.
 
-```http
-POST /api/jobs
-Content-Type: application/json
+### `POST /api/jobs` — schedule a callback
 
+```jsonc
 {
   "uniqueId": "order-42",
-  "cron": "*/5 * * * *",
-  "callbackUrl": "https://example.com/webhooks/hangfire",
+  "cron": "*/5 * * * *",              // recurring…
+  // "runAt": "2026-01-01T09:00:00Z", // …or one-shot. Exactly one of the two.
+  "callbackUrl": "https://example.com/webhooks/kairos",
   "metaData": { "orderId": "42" }
 }
 ```
 
 | Field | Required | Notes |
 | --- | --- | --- |
-| `uniqueId` | yes | Identifies the job. Also echoed back in the callback payload |
-| `cron` | yes | Standard cron expression |
+| `uniqueId` | yes | Identifies the job, echoed back in the callback |
 | `callbackUrl` | yes | Absolute `http`/`https` URL, must not resolve to a private address |
-| `metaData` | no | String map echoed back in the callback payload |
+| `cron` | one of | Cron expression for a recurring job |
+| `runAt` | one of | ISO-8601 timestamp for a one-shot job |
+| `metaData` | no | String map echoed back in the callback |
 
-`201 Created` on success, `400 Bad Request` if the callback URL is rejected.
+Returns `201` with the job's `id`. For a cron job that's your `uniqueId`, and posting it
+again updates the job in place. For a one-shot job it's a generated Hangfire id — keep it
+if you intend to cancel.
 
-Scheduling is idempotent: posting the same `uniqueId` again updates that job in place
-rather than creating a second one.
+`400` if the callback URL is rejected, or if neither/both of `cron` and `runAt` are given.
 
-### `DELETE /api/jobs/{uniqueId}` — cancel a job
+### `GET /api/jobs` — list scheduled jobs
 
-Pass the same `uniqueId` you scheduled with. Returns `200 OK`; removing a job that does
-not exist is not an error.
+```json
+[
+  {
+    "id": "order-42",
+    "type": "recurring",
+    "cron": "*/5 * * * *",
+    "callbackUrl": "https://example.com/webhooks/kairos",
+    "nextExecution": "2026-01-01T09:05:00Z",
+    "lastExecution": "2026-01-01T09:00:00Z"
+  }
+]
+```
+
+`type` is `recurring` or `scheduled` (one-shot).
+
+### `DELETE /api/jobs/{id}` — cancel a job
+
+Takes either kind of id. Returns `200` when the job was cancelled, and also when the id is
+well-formed but unknown — storage can't distinguish "just deleted" from "never existed".
+An id that no storage could have issued returns `404`.
 
 ### The callback
 
-When the cron fires, the service sends:
-
 ```http
-POST https://example.com/webhooks/hangfire
+POST https://example.com/webhooks/kairos
 Content-Type: application/json
+X-Kairos-Signature: sha256=ad71a7eb…
 
-{
-  "uniqueId": "order-42",
-  "metadata": { "orderId": "42" }
-}
+{ "uniqueId": "order-42", "metadata": { "orderId": "42" } }
 ```
 
-Return any 2xx to acknowledge. Anything else throws, and Hangfire retries on its
-default schedule. After a successful callback the recurring job removes itself.
+Return any 2xx to acknowledge. Anything else throws, and Hangfire retries on its default
+schedule. Recurring jobs keep running until you delete them; one-shot jobs are done after
+a successful callback.
 
-## Dashboard authorization
+**Verifying the signature.** The HMAC-SHA256 is computed over the raw request body with
+`Kairos:Callbacks:SigningSecret`. Compare in constant time:
 
-The dashboard exposes every job, its arguments and its history, so it is never open by
-default.
-
-**Local development** — leave `Username` empty. Requests from `localhost` are allowed;
-everything else is refused.
-
-**Deployed** — set a username and password. The dashboard then answers with
-`401` and a `WWW-Authenticate: Basic` challenge until valid credentials arrive:
-
-```bash
-export Hangfire__Dashboard__Username=admin
-export Hangfire__Dashboard__Password=$(openssl rand -base64 24)
+```python
+import hmac, hashlib
+expected = "sha256=" + hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+if not hmac.compare_digest(expected, request.headers["X-Kairos-Signature"]):
+    abort(401)
 ```
 
-Basic auth sends credentials base64-encoded, not encrypted — **serve the dashboard over
-HTTPS**. If you already have an identity provider, replace
-`src/Hangfire.Job.Api/Security/DashboardBasicAuthFilter.cs` with a filter that inspects `HttpContext.User`;
-it is the only place authorization is decided.
+```js
+const expected = "sha256=" + crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(req.get("X-Kairos-Signature")))) return res.sendStatus(401);
+```
+
+Sign over the **raw** bytes, before any JSON parsing and re-serialisation.
 
 ## Security notes
 
@@ -169,28 +184,31 @@ it is the only place authorization is decided.
   in between. Rejected: non-http(s) schemes, loopback, RFC 1918 private ranges,
   carrier-grade NAT, link-local `169.254.0.0/16` (cloud metadata), multicast, and the
   IPv6 equivalents.
-- **The API itself is unauthenticated.** Anyone who can reach it can schedule jobs. Put
-  it behind a gateway, mTLS or a network boundary before exposing it. Adding API
-  authentication is [open work](CONTRIBUTING.md).
-- **Callback payloads are not signed.** A receiver cannot yet verify a callback came from
-  this service. Also open work.
+- **Transport.** API keys and Basic credentials are sent in clear. Terminate TLS in front
+  of Kairos; the container speaks plain HTTP on 8080 by design.
+- **Callback delivery isn't audited via the API yet.** Use the dashboard for history.
+
+## Licensing
+
+Kairos itself is [MIT](LICENSE). It depends on Hangfire, which is **LGPL v3** — fine to
+use and to run, but if you redistribute Kairos (a modified fork, or your own container
+image) the LGPL obligations for that dependency travel with it. Check the terms for your
+situation; a commercial Hangfire licence is available if LGPL doesn't suit you.
+
+Kairos is not affiliated with or endorsed by HangfireIO.
 
 ## Project layout
 
 ```
-src/Hangfire.Job.Api/
+src/Kairos.Api/
 ├── Controllers/JobsController.cs             # the JSON API
-├── Dtos/                                     # request and callback shapes
+├── Dtos/                                     # request, callback and summary shapes
+├── Security/ApiKeyAuthenticator.cs           # API key guard
 ├── Security/DashboardBasicAuthFilter.cs      # dashboard authorization
+├── Services/CallbackSigner.cs                # HMAC callback signatures
 ├── Services/CallbackUrlValidator.cs          # SSRF guard
 └── Services/Providers/DynamicCallbackJob.cs  # what Hangfire executes
-tests/Hangfire.Job.Api.Tests/                 # xUnit tests
-```
-
-## Tests
-
-```bash
-dotnet test
+tests/Kairos.Api.Tests/                       # xUnit tests
 ```
 
 ## Contributing

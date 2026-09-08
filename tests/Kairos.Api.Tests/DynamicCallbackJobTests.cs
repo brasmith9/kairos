@@ -1,8 +1,8 @@
 using System.Net;
-using Hangfire.Job.Api.Services;
-using Hangfire.Job.Api.Services.Providers;
+using Kairos.Api.Services;
+using Kairos.Api.Services.Providers;
 
-namespace Hangfire.Job.Api.Tests;
+namespace Kairos.Api.Tests;
 
 public class DynamicCallbackJobTests
 {
@@ -11,10 +11,11 @@ public class DynamicCallbackJobTests
     {
         // A hostname that passed validation when the job was created can later
         // resolve to a private address (DNS rebinding), so the job re-validates.
-        var validator = new CallbackUrlValidator(
-            new CallbackOptions(),
-            _ => Task.FromResult(new[] { IPAddress.Parse("169.254.169.254") }));
-        var job = new DynamicCallbackJob(new HttpClient(), validator);
+        var options = new CallbackOptions();
+        var job = new DynamicCallbackJob(
+            new HttpClient(),
+            new CallbackUrlValidator(options, _ => Task.FromResult(new[] { IPAddress.Parse("169.254.169.254") })),
+            options);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             job.ExecuteAndNotifyAsync("order-1", "http://metadata.example.com/", []));

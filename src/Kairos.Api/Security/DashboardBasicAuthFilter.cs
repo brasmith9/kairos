@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Hangfire.Dashboard;
 
-namespace Hangfire.Job.Api.Security;
+namespace Kairos.Api.Security;
 
 /// <summary>
 /// Guards the Hangfire dashboard with HTTP Basic authentication.
@@ -20,7 +20,7 @@ public class DashboardBasicAuthFilter(DashboardAuthOptions options) : IDashboard
     {
         if (string.IsNullOrWhiteSpace(options.Username))
         {
-            return IsLocalRequest(httpContext);
+            return LocalRequest.IsLocal(httpContext);
         }
 
         if (TryReadBasicCredentials(httpContext.Request.Headers.Authorization.ToString(), out var user, out var password)
@@ -33,17 +33,6 @@ public class DashboardBasicAuthFilter(DashboardAuthOptions options) : IDashboard
         httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
         httpContext.Response.Headers.WWWAuthenticate = Challenge;
         return false;
-    }
-
-    private static bool IsLocalRequest(HttpContext httpContext)
-    {
-        var remote = httpContext.Connection.RemoteIpAddress;
-        var local = httpContext.Connection.LocalIpAddress;
-
-        if (remote is null) return local is null;
-        if (local is not null) return remote.Equals(local);
-
-        return IPAddress.IsLoopback(remote);
     }
 
     private static bool TryReadBasicCredentials(string header, out string username, out string password)
