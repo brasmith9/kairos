@@ -12,7 +12,7 @@ dotnet build
 dotnet test
 ```
 
-Copy your local configuration into `Hangfire.Job.Api/appsettings.Development.json`. That
+Copy your local configuration into `src/Hangfire.Job.Api/appsettings.Development.json`. That
 file is gitignored — real connection strings and passwords must never be committed. If
 you find one in a diff, say so on the pull request.
 

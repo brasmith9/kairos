@@ -37,11 +37,11 @@ cd Hangfire.Job.Api
 createdb Hangfire
 
 # Point the app at your database (see Configuration below)
-dotnet user-secrets --project Hangfire.Job.Api \
+dotnet user-secrets --project src/Hangfire.Job.Api \
   set "ConnectionStrings:DefaultConnection" \
   "Server=127.0.0.1;Port=5432;User Id=postgres;Password=yourpassword;Database=Hangfire"
 
-dotnet run --project Hangfire.Job.Api
+dotnet run --project src/Hangfire.Job.Api
 ```
 
 The service starts on `http://localhost:5222`. Hangfire creates its own tables on first run.
@@ -156,7 +156,7 @@ export Hangfire__Dashboard__Password=$(openssl rand -base64 24)
 
 Basic auth sends credentials base64-encoded, not encrypted — **serve the dashboard over
 HTTPS**. If you already have an identity provider, replace
-`Security/DashboardBasicAuthFilter.cs` with a filter that inspects `HttpContext.User`;
+`src/Hangfire.Job.Api/Security/DashboardBasicAuthFilter.cs` with a filter that inspects `HttpContext.User`;
 it is the only place authorization is decided.
 
 ## Security notes
@@ -175,13 +175,13 @@ it is the only place authorization is decided.
 ## Project layout
 
 ```
-Hangfire.Job.Api/
-├── Controllers/JobsController.cs          # the JSON API
-├── Dtos/                                  # request and callback shapes
-├── Security/DashboardBasicAuthFilter.cs   # dashboard authorization
-├── Services/CallbackUrlValidator.cs       # SSRF guard
+src/Hangfire.Job.Api/
+├── Controllers/JobsController.cs             # the JSON API
+├── Dtos/                                     # request and callback shapes
+├── Security/DashboardBasicAuthFilter.cs      # dashboard authorization
+├── Services/CallbackUrlValidator.cs          # SSRF guard
 └── Services/Providers/DynamicCallbackJob.cs  # what Hangfire executes
-Hangfire.Job.Api.Tests/                    # xUnit tests
+tests/Hangfire.Job.Api.Tests/                 # xUnit tests
 ```
 
 ## Tests
