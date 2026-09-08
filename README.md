@@ -109,17 +109,20 @@ Content-Type: application/json
 
 | Field | Required | Notes |
 | --- | --- | --- |
-| `uniqueId` | yes | Your identifier, echoed back in the callback payload |
+| `uniqueId` | yes | Identifies the job. Also echoed back in the callback payload |
 | `cron` | yes | Standard cron expression |
 | `callbackUrl` | yes | Absolute `http`/`https` URL, must not resolve to a private address |
-| `jobName` | no | Hangfire recurring-job id. Defaults to a new GUID |
 | `metaData` | no | String map echoed back in the callback payload |
 
 `201 Created` on success, `400 Bad Request` if the callback URL is rejected.
 
+Scheduling is idempotent: posting the same `uniqueId` again updates that job in place
+rather than creating a second one.
+
 ### `DELETE /api/jobs/{uniqueId}` — cancel a job
 
-Returns `200 OK`. Removing a job that does not exist is not an error.
+Pass the same `uniqueId` you scheduled with. Returns `200 OK`; removing a job that does
+not exist is not an error.
 
 ### The callback
 

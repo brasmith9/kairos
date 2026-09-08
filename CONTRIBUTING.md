@@ -47,9 +47,6 @@ Good places to start, roughly easiest first:
 
 - **Cron validation** — an invalid cron expression is currently accepted and fails later,
   inside Hangfire.
-- **Integration tests** — the success path of `POST /api/jobs` is untested because it
-  calls the static `RecurringJob.AddOrUpdate`, which needs real storage. A test using
-  Hangfire's in-memory storage would close that gap.
 - **Signed callbacks** — an HMAC header so receivers can verify a callback really came
   from this service.
 - **API authentication** — the job endpoints are open to anyone who can reach them.

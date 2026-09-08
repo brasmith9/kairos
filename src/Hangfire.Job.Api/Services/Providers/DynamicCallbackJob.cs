@@ -7,7 +7,7 @@ namespace Hangfire.Job.Api.Services.Providers;
 public class DynamicCallbackJob(HttpClient httpClient, CallbackUrlValidator callbackUrlValidator)
 {
     // Hangfire will execute this method when the cron expression triggers.
-    public async Task ExecuteAndNotifyAsync(string jobName, string uniqueId, string callbackUrl,
+    public async Task ExecuteAndNotifyAsync(string uniqueId, string callbackUrl,
         Dictionary<string, string> metadata)
     {
         // Re-check the URL at execution time: the host may have been re-pointed at a
@@ -28,6 +28,6 @@ public class DynamicCallbackJob(HttpClient httpClient, CallbackUrlValidator call
         var response = await httpClient.PostAsJsonAsync(callbackUrl, payload);
         response.EnsureSuccessStatusCode();
 
-        RecurringJob.RemoveIfExists(jobName);
+        RecurringJob.RemoveIfExists(uniqueId);
     }
 }
