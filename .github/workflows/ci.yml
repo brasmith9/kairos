@@ -3,8 +3,8 @@ name: CI
 on:
   push:
     branches: [main]
+  # Unfiltered so stacked pull requests, which target another branch, are still checked.
   pull_request:
-    branches: [main]
 
 jobs:
   build:
