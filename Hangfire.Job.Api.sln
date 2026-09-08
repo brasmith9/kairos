@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# 
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.Job.Api", "Hangfire.Job.Api\Hangfire.Job.Api.csproj", "{A9FD286B-B358-4FD4-A813-09F432A50CDB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CCA81309-5BA4-40E2-AD90-82274227A17F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{06ABB4E4-4C43-43C5-8A55-1517F74E31E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.Job.Api.Tests", "Hangfire.Job.Api.Tests\Hangfire.Job.Api.Tests.csproj", "{7F5E458A-9A25-4BA9-BC32-BBF71D63D630}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A9FD286B-B358-4FD4-A813-09F432A50CDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9FD286B-B358-4FD4-A813-09F432A50CDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9FD286B-B358-4FD4-A813-09F432A50CDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9FD286B-B358-4FD4-A813-09F432A50CDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F5E458A-9A25-4BA9-BC32-BBF71D63D630}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F5E458A-9A25-4BA9-BC32-BBF71D63D630}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F5E458A-9A25-4BA9-BC32-BBF71D63D630}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F5E458A-9A25-4BA9-BC32-BBF71D63D630}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A9FD286B-B358-4FD4-A813-09F432A50CDB} = {CCA81309-5BA4-40E2-AD90-82274227A17F}
+	EndGlobalSection
+EndGlobal
