@@ -1,0 +1,38 @@
+@Kairos_HostAddress = http://localhost:8080
+@Kairos_ApiKey = dev-api-key
+
+### Schedule a recurring job
+POST {{Kairos_HostAddress}}/api/jobs
+Content-Type: application/json
+X-Api-Key: {{Kairos_ApiKey}}
+
+{
+  "uniqueId": "order-42",
+  "cron": "*/5 * * * *",
+  "callbackUrl": "https://example.com/webhooks/kairos",
+  "metaData": {
+    "orderId": "42"
+  }
+}
+
+### Schedule a one-shot job
+POST {{Kairos_HostAddress}}/api/jobs
+Content-Type: application/json
+X-Api-Key: {{Kairos_ApiKey}}
+
+{
+  "uniqueId": "order-43",
+  "runAt": "2026-12-24T09:00:00Z",
+  "callbackUrl": "https://example.com/webhooks/kairos"
+}
+
+### List scheduled jobs
+GET {{Kairos_HostAddress}}/api/jobs
+X-Api-Key: {{Kairos_ApiKey}}
+
+### Cancel a job
+DELETE {{Kairos_HostAddress}}/api/jobs/order-42
+X-Api-Key: {{Kairos_ApiKey}}
+
+### Dashboard (Basic auth)
+GET {{Kairos_HostAddress}}/dashboard

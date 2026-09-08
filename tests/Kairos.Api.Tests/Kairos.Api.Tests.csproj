@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Hangfire.Job.Api\Hangfire.Job.Api.csproj" />
+        <ProjectReference Include="..\..\src\Kairos.Api\Kairos.Api.csproj" />
     </ItemGroup>
 
 </Project>

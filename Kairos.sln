@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # 
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AC038250-7623-48EE-AAC9-F3A7BE05CAD0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.Job.Api", "src\Hangfire.Job.Api\Hangfire.Job.Api.csproj", "{2E03FBCB-758B-4748-81A6-DACB5874540B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kairos.Api", "src\Kairos.Api\Kairos.Api.csproj", "{2E03FBCB-758B-4748-81A6-DACB5874540B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{1FB43ED0-9F6B-4644-B225-2F5952823037}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.Job.Api.Tests", "tests\Hangfire.Job.Api.Tests\Hangfire.Job.Api.Tests.csproj", "{47F94F1D-4568-497D-A928-F17AFA3C142B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kairos.Api.Tests", "tests\Kairos.Api.Tests\Kairos.Api.Tests.csproj", "{47F94F1D-4568-497D-A928-F17AFA3C142B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

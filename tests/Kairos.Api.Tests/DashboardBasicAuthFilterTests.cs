@@ -1,9 +1,9 @@
 using System.Net;
 using System.Text;
-using Hangfire.Job.Api.Security;
+using Kairos.Api.Security;
 using Microsoft.AspNetCore.Http;
 
-namespace Hangfire.Job.Api.Tests;
+namespace Kairos.Api.Tests;
 
 public class DashboardBasicAuthFilterTests
 {
