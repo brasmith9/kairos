@@ -64,6 +64,40 @@ The dashboard is at <http://localhost:8080/dashboard> (`admin` / `admin`).
 > sibling services resolve to private addresses. **They are development values.** See
 > [Configuration](#configuration) before deploying.
 
+### Without cloning
+
+Releases publish a multi-arch image to GHCR, so a `compose.yml` is the whole install:
+
+```yaml
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: Kairos
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d Kairos"]
+      interval: 5s
+      retries: 10
+
+  api:
+    image: ghcr.io/brasmith9/kairos:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=db;Port=5432;User Id=postgres;Password=postgres;Database=Kairos"
+      Kairos__Api__Keys__0: dev-api-key
+      Kairos__Dashboard__Username: admin
+      Kairos__Dashboard__Password: admin
+      Kairos__Callbacks__SigningSecret: dev-signing-secret
+```
+
+Same development values as above, and the same warning applies. Pin a real tag rather
+than `latest` for anything you intend to keep running.
+
 ### Running from source
 
 ```bash
@@ -145,6 +179,25 @@ if you intend to cancel.
 Takes either kind of id. Returns `200` when the job was cancelled, and also when the id is
 well-formed but unknown — storage can't distinguish "just deleted" from "never existed".
 An id that no storage could have issued returns `404`.
+
+### `GET /health` — readiness
+
+Returns `200` when Kairos can reach its database, `503` when it can't. No API key: an
+orchestrator has no way to send one. Note that Kairos won't finish starting at all if the
+database is unreachable, so this reports a database lost *after* startup.
+
+### OpenAPI
+
+The generated document is served in every environment at `/swagger/v1/swagger.json`, with
+the browsable UI at `/swagger`. Point a client generator at it:
+
+```bash
+npx @openapitools/openapi-generator-cli generate \
+  -i http://localhost:8080/swagger/v1/swagger.json -g typescript-fetch -o ./kairos-client
+```
+
+It documents the same three routes as this README, so it is not privileged information —
+but it is unauthenticated, so put it behind your proxy if your deployment differs.
 
 ### The callback
 

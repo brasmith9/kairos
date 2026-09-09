@@ -5,11 +5,18 @@ using Hangfire.PostgreSql;
 using Kairos.Api.Security;
 using Kairos.Api.Services;
 using Kairos.Api.Services.Providers;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options => options.SwaggerDoc("v1", new OpenApiInfo
+{
+    Title = "Kairos",
+    Version = "v1",
+    Description = "Scheduled webhooks. Cron in, signed HTTP callback out.",
+    License = new OpenApiLicense { Name = "MIT", Url = new Uri("https://opensource.org/license/mit") }
+}));
 
 builder.Services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
 
@@ -44,13 +51,13 @@ builder.Services.AddHangfire(configuration => configuration
 
 builder.Services.AddHangfireServer();
 
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!);
+
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
@@ -70,6 +77,9 @@ app.UseWhen(context => context.Request.Path.StartsWithSegments("/api"), branch =
 
 app.MapControllers();
 
+// Outside /api, so it needs no API key - orchestrators can't send one.
+app.MapHealthChecks("/health");
+
 app.UseHangfireDashboard(dashboardOptions.Path, new DashboardOptions
 {
     DashboardTitle = "Kairos",
@@ -77,3 +87,6 @@ app.UseHangfireDashboard(dashboardOptions.Path, new DashboardOptions
 });
 
 app.Run();
+
+// Named so the test project can boot the app with WebApplicationFactory.
+public partial class Program;
